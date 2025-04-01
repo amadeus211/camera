@@ -1,17 +1,13 @@
 import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
+import ReactDOM from 'react-dom/client'; // Оновлений імпорт для React 18
+import './index.css'; // Якщо у вас є стилі для вашого додатку
+import StreamPlayer from './App'; // Імпортуємо компонент
+import OnvifCameraManager from './App';
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const root = ReactDOM.createRoot(document.getElementById('root')); // Оновлений спосіб створення кореня
+
 root.render(
   <React.StrictMode>
-    <App />
+    <OnvifCameraManager />  {/* Використовуємо компонент StreamPlayer */}
   </React.StrictMode>
 );
-
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
