@@ -14,7 +14,6 @@ const cors = require("cors");
 //   })
 // );
 
-
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "http://localhost:3000");
   res.header("Access-Control-Allow-Methods", "GET,HEAD,PUT,PATCH,POST,DELETE");
@@ -91,6 +90,7 @@ function httpServerRequest(req, res) {
   }
   if (path === "/") {
     path = "/index.html";
+    console.log("html?");
   }
   var fpath = "./html" + path;
   fs.readFile(fpath, "utf-8", function (err, data) {
@@ -107,35 +107,6 @@ function httpServerRequest(req, res) {
   });
 }
 
-function getContentType(fpath) {
-  var ext = fpath.split(".").pop().toLowerCase();
-  if (ext.match(/^(html|htm)$/)) {
-    return "text/html";
-  } else if (ext.match(/^(jpeg|jpg)$/)) {
-    return "image/jpeg";
-  } else if (ext.match(/^(png|gif)$/)) {
-    return "image/" + ext;
-  } else if (ext === "css") {
-    return "text/css";
-  } else if (ext === "js") {
-    return "text/javascript";
-  } else if (ext === "woff2") {
-    return "application/font-woff";
-  } else if (ext === "woff") {
-    return "application/font-woff";
-  } else if (ext === "ttf") {
-    return "application/font-ttf";
-  } else if (ext === "svg") {
-    return "image/svg+xml";
-  } else if (ext === "eot") {
-    return "application/vnd.ms-fontobject";
-  } else if (ext === "oft") {
-    return "application/x-font-otf";
-  } else {
-    return "application/octet-stream";
-  }
-}
-
 function httpServerResponse404(url, res) {
   res.writeHead(404, { "Content-Type": "text/plain" });
   res.write("404 Not Found: " + url);
@@ -143,23 +114,32 @@ function httpServerResponse404(url, res) {
   console.log("HTTP : 404 Not Found : " + url);
 }
 
-var client_list = [];
-
 function wsServerRequest(request) {
   var conn = request.accept(null, request.origin);
+
+  // Перевірка наявності пристроїв перед виконанням команд
+  if (Object.keys(devices).length === 0) {
+    startDiscovery(conn); // Якщо пристроїв немає, ініціалізуємо їх
+  }
+
   conn.on("message", function (message) {
     if (message.type !== "utf8") {
       return;
     }
     var data = JSON.parse(message.utf8Data);
     var method = data["method"];
+    console.log(`Received method: ${method}`); // Логування отриманого методу
+
     var params = data["params"];
     if (method === "startDiscovery") {
       startDiscovery(conn);
     } else if (method === "connect") {
+      console.log("connect init");
+
       connect(conn, params);
     } else if (method === "ptzMove") {
-      ptzMove(conn, params);
+      console.log("Move command received, initiating PTZ...");
+      ptzMove(conn, params); // Викликаємо функцію переміщення PTZ
     } else if (method === "ptzStop") {
       ptzStop(conn, params);
     } else if (method === "ptzHome") {
@@ -206,7 +186,11 @@ function startDiscovery(conn) {
 }
 
 function connect(conn, params) {
+  console.log("params:", params, "conn:", conn);
+
   var device = devices[params.address];
+  console.log("device:", device);
+
   if (!device) {
     var res = {
       id: "connect",
@@ -225,32 +209,45 @@ function connect(conn, params) {
     } else {
       res["result"] = result;
     }
+    console.log(JSON.stringify(res));
+    console.log("JSON SEND");
+
     conn.send(JSON.stringify(res));
   });
 }
-
 function ptzMove(conn, params) {
+  console.log("Received PTZ Move params:", params); // Логування параметрів
+  console.log(devices);
+
   var device = devices[params.address];
+  console.log(device);
+
   if (!device) {
     var res = {
       id: "ptzMove",
       error: "The specified device is not found: " + params.address,
     };
-    conn.send(JSON.stringify(res));
+    conn.send(JSON.stringify(res)); // Надсилаємо відповідь з помилкою
+    console.log("Device not found: ", params.address);
     return;
   }
+
   device.ptzMove(params, (error) => {
     var res = { id: "ptzMove" };
     if (error) {
       res["error"] = error.toString();
     } else {
-      res["result"] = true;
+      res["result"] = "success";
     }
+    console.log("PTZ move response sent: ", res);
     conn.send(JSON.stringify(res));
+    console.log(JSON.stringify(res));
   });
 }
 
 function ptzStop(conn, params) {
+  console.log("Device address:", params.address);
+
   var device = devices[params.address];
   if (!device) {
     var res = {

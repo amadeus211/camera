@@ -1,7 +1,6 @@
+import React, { useEffect, useState } from "react";
 import JSMpeg from "@cycjimmy/jsmpeg-player";
 import axios from "axios";
-import "./index.css";
-import React, { useEffect, useState } from "react";
 import $ from "jquery";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min";
@@ -20,16 +19,37 @@ const OnvifCameraManager = () => {
 
   const rtspurl = "rtsp://admin:Sasha21012004@192.168.0.106:554/stream1";
 
+  useEffect(() => {
+    // Додавання jQuery перед Onvif.js
+    const jqueryScript = document.createElement("script");
+    jqueryScript.src = "https://code.jquery.com/jquery-3.6.0.min.js";
+    jqueryScript.async = true;
+    document.body.appendChild(jqueryScript);
+
+    jqueryScript.onload = () => {
+      console.log("jQuery loaded");
+
+      const onvifScript = document.createElement("script");
+      onvifScript.src = "/onvif.js";
+      onvifScript.async = true;
+      document.body.appendChild(onvifScript);
+
+      onvifScript.onload = () => {
+        console.log("Onvif.js loaded");
+      };
+    };
+
+    return () => {
+      document.body.removeChild(jqueryScript);
+    };
+  }, []);
+
   const httpRequest = (url) => {
     console.log(`Sending request to start stream: ${url}`);
     axios
       .get(`http://127.0.0.1:3003/stream?rtsp=${url}`)
-      .then((response) => {
-        console.log("Stream started", response.data);
-      })
-      .catch((error) => {
-        console.log("Error starting stream", error);
-      });
+      .then((response) => console.log("Stream started", response.data))
+      .catch((error) => console.log("Error starting stream", error));
   };
 
   useEffect(() => {
@@ -40,7 +60,6 @@ const OnvifCameraManager = () => {
         httpRequest(rtspurl);
         const url = "ws://127.0.0.1:9999";
         let canvas = document.getElementById("video-canvas");
-        console.log("Canvas element:", canvas);
 
         if (canvas) {
           try {
@@ -75,7 +94,6 @@ const OnvifCameraManager = () => {
 
   useEffect(() => {
     initWebSocket();
-    console.log("3003");
 
     return () => ws && ws.close();
   }, []);
@@ -127,6 +145,8 @@ const OnvifCameraManager = () => {
       return;
     }
     console.log("Connecting to:", selectedDevice, "User:", user, "Pass:", pass);
+    console.log(`device info: ${user} ${selectedDevice}`);
+
     sendRequest(ws, "connect", { address: selectedDevice, user, pass });
     setCameraConnected(true);
   };
@@ -141,15 +161,44 @@ const OnvifCameraManager = () => {
     console.log(connected);
   }, [connected]);
 
+  const ptzControl = (direction) => {
+    if (!cameraConnected) return;
+
+    let speed = { x: 0, y: 0, z: 0 };
+
+    switch (direction) {
+      case "up":
+        speed.y = parseFloat(ptzSpeed);
+        break;
+      case "down":
+        speed.y = -parseFloat(ptzSpeed);
+        break;
+      case "left":
+        speed.x = -parseFloat(ptzSpeed);
+        break;
+      case "right":
+        speed.x = parseFloat(ptzSpeed);
+        break;
+      default:
+        console.error("Unknown direction:", direction);
+        return;
+    }
+
+    console.log("Sending PTZ command with params:", {
+      address: selectedDevice,
+      speed,
+      timeout: 5,
+    });
+
+    sendRequest(ws, "ptzMove", { address: selectedDevice, speed, timeout: 30 });
+  };
+
   return (
     <div className="container mt-4">
       <h1>ONVIF Network Camera Manager</h1>
 
       {!connected ? (
         <div>
-          {/* <div>
-            <canvas id="video-canvas"></canvas>
-          </div> */}
           <div className="form-group">
             <label>Device</label>
             <select
@@ -172,9 +221,7 @@ const OnvifCameraManager = () => {
               type="text"
               className="form-control"
               value={user}
-              onChange={(e) => {
-                setUser(e.target.value);
-              }}
+              onChange={(e) => setUser(e.target.value)}
             />
           </div>
 
@@ -200,15 +247,56 @@ const OnvifCameraManager = () => {
           <div className="control">
             <div className="ptz-ctl-box">
               <div className="ptz-pad-box">
-                <button className="ptz-btn up">Up</button>
-                <button className="ptz-btn left">Left</button>
-                <button className="ptz-btn right">Right</button>
-                <button className="ptz-btn down">Down</button>
+                <button className="ptz-btn up" onClick={() => ptzControl("up")}>
+                  Up
+                </button>
+                <button
+                  className="ptz-btn left"
+                  onClick={() => ptzControl("left")}
+                >
+                  Left
+                </button>
+                <button
+                  className="ptz-btn right"
+                  onClick={() => ptzControl("right")}
+                >
+                  Right
+                </button>
+                <button
+                  className="ptz-btn down"
+                  onClick={() => ptzControl("down")}
+                >
+                  Down
+                </button>
               </div>
             </div>
             <div>
               <button className="secondary" onClick={disconnectDevice}>
                 Disconnect
+              </button>
+            </div>
+            <div className="speed-control">
+              <label>Speed: {ptzSpeed}</label>
+              <button
+                className="btn btn-secondary"
+                onClick={() => setPtzSpeed((prev) => Math.max(0.1, prev - 0.1))}
+              >
+                -
+              </button>
+              <input
+                type="number"
+                className="form-control"
+                value={ptzSpeed}
+                onChange={(e) => setPtzSpeed(parseFloat(e.target.value) || 0.1)}
+                step="0.1"
+                min="0.1"
+                max="5.0"
+              />
+              <button
+                className="btn btn-secondary"
+                onClick={() => setPtzSpeed((prev) => Math.min(5.0, prev + 0.1))}
+              >
+                +
               </button>
             </div>
           </div>

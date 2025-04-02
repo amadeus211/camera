@@ -149,3 +149,16 @@ button.ptz-btn:hover {
 	font-size: 25px;
 	border-color: red;
 }
+
+.speed-control {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 15px;
+  }
+  
+  .speed-control input {
+	width: 60px;
+	text-align: center;
+  }
+  
