@@ -6,14 +6,6 @@ process.chdir(__dirname);
 const app = express();
 const cors = require("cors");
 
-// app.use(
-//   cors({
-//     origin: "http://localhost:3000",
-//     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-//     credentials: true,
-//   })
-// );
-
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "http://localhost:3000");
   res.header("Access-Control-Allow-Methods", "GET,HEAD,PUT,PATCH,POST,DELETE");
@@ -117,9 +109,8 @@ function httpServerResponse404(url, res) {
 function wsServerRequest(request) {
   var conn = request.accept(null, request.origin);
 
-  // Перевірка наявності пристроїв перед виконанням команд
   if (Object.keys(devices).length === 0) {
-    startDiscovery(conn); // Якщо пристроїв немає, ініціалізуємо їх
+    startDiscovery(conn);
   }
 
   conn.on("message", function (message) {
@@ -128,7 +119,7 @@ function wsServerRequest(request) {
     }
     var data = JSON.parse(message.utf8Data);
     var method = data["method"];
-    console.log(`Received method: ${method}`); // Логування отриманого методу
+    console.log(`Received method: ${method}`);
 
     var params = data["params"];
     if (method === "startDiscovery") {
@@ -139,7 +130,7 @@ function wsServerRequest(request) {
       connect(conn, params);
     } else if (method === "ptzMove") {
       console.log("Move command received, initiating PTZ...");
-      ptzMove(conn, params); // Викликаємо функцію переміщення PTZ
+      ptzMove(conn, params);
     } else if (method === "ptzStop") {
       ptzStop(conn, params);
     } else if (method === "ptzHome") {
@@ -238,67 +229,6 @@ function ptzMove(conn, params) {
       res["error"] = error.toString();
     } else {
       res["result"] = "success";
-    }
-    console.log("PTZ move response sent: ", res);
-    conn.send(JSON.stringify(res));
-    console.log(JSON.stringify(res));
-  });
-}
-
-function ptzStop(conn, params) {
-  console.log("Device address:", params.address);
-
-  var device = devices[params.address];
-  if (!device) {
-    var res = {
-      id: "ptzStop",
-      error: "The specified device is not found: " + params.address,
-    };
-    conn.send(JSON.stringify(res));
-    return;
-  }
-  device.ptzStop((error) => {
-    var res = { id: "ptzStop" };
-    if (error) {
-      res["error"] = error.toString();
-    } else {
-      res["result"] = true;
-    }
-    conn.send(JSON.stringify(res));
-  });
-}
-
-function ptzHome(conn, params) {
-  var device = devices[params.address];
-  if (!device) {
-    var res = {
-      id: "ptzMove",
-      error: "The specified device is not found: " + params.address,
-    };
-    conn.send(JSON.stringify(res));
-    return;
-  }
-  if (!device.services.ptz) {
-    var res = {
-      id: "ptzHome",
-      error: "The specified device does not support PTZ.",
-    };
-    conn.send(JSON.stringify(res));
-    return;
-  }
-
-  var ptz = device.services.ptz;
-  var profile = device.getCurrentProfile();
-  var params = {
-    ProfileToken: profile["token"],
-    Speed: 1,
-  };
-  ptz.gotoHomePosition(params, (error, result) => {
-    var res = { id: "ptzMove" };
-    if (error) {
-      res["error"] = error.toString();
-    } else {
-      res["result"] = true;
     }
     conn.send(JSON.stringify(res));
   });

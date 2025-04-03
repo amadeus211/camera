@@ -1,7 +1,33 @@
 .container {
 	max-width: 600px;
+	width: 100%;
 	margin: auto;
 	text-align: center;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-direction: column;
+}
+
+.form-control {
+	width: 100%;
+	padding: 10px;
+	font-size: 16px;
+	border-radius: 8px;
+	border: 1px solid #ccc;
+}
+
+.form-group {
+	margin-bottom: 15px;
+	text-align: left;
+	width: 100%;
+}
+
+.title {
+	display: flex;
+	justify-content: space-around;
+	align-items: center;
+	width: 100%;
 }
 
 h1 {
@@ -10,9 +36,10 @@ h1 {
 	font-weight: bold;
 }
 
-.form-group {
+.connect-container {
 	margin-bottom: 15px;
 	text-align: left;
+	width: 100%;
 }
 
 .btn {
@@ -49,7 +76,7 @@ h1 {
 	flex-direction: column;
 }
 
-.control{
+.control {
 	display: flex;
 	gap: 50px;
 	align-items: center;
@@ -68,40 +95,43 @@ h1 {
 }
 
 .ptz-ctl-box {
-	margin-left: 200px;
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	flex-direction: row;
-	max-width: 100%;
-	height: auto;
+
 	margin-top: 20px;
+	padding: 10px;
 	border: 2px solid #333;
 	background-color: #1d1d1d;
 	border-radius: 10px;
-	width: 200px;
-	height: 200px;
+	width: 220px;
+	height: 220px;
 	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-	/* bottom: 30px; */
-	/* left: 50%; */
-	transform: translateX(-50%);
 }
 
-.ptz-pad-box {
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
+.ptz-grid {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	grid-template-rows: repeat(3, 1fr);
+	gap: 5px;
+	width: 100%;
 	height: 100%;
+	place-items: center;
 }
 
 button.ptz-btn {
 	font-size: 24px;
 	color: #fff;
-	background: none;
+	background: #444;
 	border: none;
 	padding: 10px;
 	cursor: pointer;
+	width: 50px;
+	height: 50px;
+	border-radius: 50%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
 	transition: background 0.3s ease;
 }
 
@@ -109,45 +139,31 @@ button.ptz-btn:hover {
 	background-color: #555;
 }
 
-.ptz-btn.up {
-	margin-bottom: 10px;
+.ptz-btn.stop {
+	background-color: red;
+	color: white;
+	font-weight: bold;
 }
 
-.ptz-btn.down {
-	margin-top: 10px;
-}
-
-.ptz-btn.left,
-.ptz-btn.right {
-	position: absolute;
-	top: 50%;
-	transform: translateY(-50%);
-}
-
-.ptz-btn.left {
-	left: 10px;
-}
-
-.ptz-btn.right {
-	right: 10px;
-}
-
-.ptz-btn.up {
-	top: 10px;
-}
-
-.ptz-btn.down {
-	bottom: 10px;
+.ptz-btn.empty {
+	visibility: hidden;
 }
 
 .secondary {
 	background-color: red;
 	width: 200px;
+	/* Робить кнопку на всю ширину */
 	height: 100px;
+	/* Встановлює висоту кнопки */
 	color: white;
 	border-radius: 15px;
 	font-size: 25px;
-	border-color: red;
+	border: none;
+	/* Прибирає рамку, якщо хочете */
+	display: block;
+	/* Для того, щоб кнопка займала всю доступну ширину */
+	margin: 10px 0;
+	/* Можна додати відступи для кращого вигляду */
 }
 
 .speed-control {
@@ -155,10 +171,9 @@ button.ptz-btn:hover {
 	align-items: center;
 	gap: 10px;
 	margin-bottom: 15px;
-  }
-  
-  .speed-control input {
+}
+
+.speed-control input {
 	width: 60px;
 	text-align: center;
-  }
-  
+}
